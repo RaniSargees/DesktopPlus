@@ -95,7 +95,21 @@ DUPL_RETURN DUPLICATIONMANAGER::InitDupl(_In_ ID3D11Device* Device, UINT Output)
     }
 
     // Create desktop duplication
-    hr = DxgiOutput1->DuplicateOutput(m_Device, &m_DeskDupl);
+    //hr = DxgiOutput1->DuplicateOutput(m_Device, &m_DeskDupl);
+  
+    // taken from https://github.com/danielibrahim/dd4seven
+    HMODULE ddApi = LoadLibraryA("dd4seven-api.dll");
+    if (ddApi) {
+        // Win7
+        HRESULT (__stdcall *duplicate)(IDXGIOutput *DxgiOutput1, IUnknown *m_Device, IDXGIOutputDuplication **m_DeskDupl);
+        duplicate = (decltype(duplicate))GetProcAddress(ddApi, "DuplicateOutput");
+
+        hr = duplicate(DxgiOutput1, m_Device, &m_DeskDupl);
+    } else {
+        // Win8
+        hr = DxgiOutput1->DuplicateOutput(m_Device, &m_DeskDupl);
+    }
+  
     DxgiOutput1->Release();
     DxgiOutput1 = nullptr;
     if (FAILED(hr))
